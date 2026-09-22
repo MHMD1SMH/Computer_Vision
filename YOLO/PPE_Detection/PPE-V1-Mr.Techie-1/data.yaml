@@ -1,0 +1,14 @@
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 5
+
+names: ['Helmet', 'Person', 'Ear-protection', 'Glove', 'Boots']
+
+roboflow:
+  workspace: badminton-szmsf
+  project: ppe-v1-mr-techie-bg8bf
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/badminton-szmsf/ppe-v1-mr-techie-bg8bf/dataset/1
