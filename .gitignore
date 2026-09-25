@@ -4,6 +4,7 @@ Training/football_players-2/
 
 # Videos
 *.mp4
+*.avi
 
 # YOLO models
 *.pt
