@@ -1,0 +1,17 @@
+# Large datasets
+Training/football-players-detection-1/
+Training/football_players-2/
+
+# Videos
+*.mp4
+
+# YOLO models
+*.pt
+*.torchscript
+
+# YOLO outputs
+runs/
+YOLO/Football_Analysis/Output_Videos/
+
+# Other generated files
+YOLO/benchmarks.log
