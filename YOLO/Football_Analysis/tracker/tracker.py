@@ -5,6 +5,7 @@ import os
 import pickle
 import numpy as np
 import sys
+import pandas as pd
 sys.path.append('../')
 from utils import get_center_of_bbox, get_bbox_width
 class Tracker:
@@ -12,6 +13,14 @@ class Tracker:
         self.model = YOLO(model_path)
         self.tracker = sv.ByteTrack()
 
+    def interpolate_ball(self, ball_pos):
+        ball_positions = [x.get(1,{}).get('bbox',[]) for x in ball_pos]
+        df_ball_positions = pd.DataFrame(ball_positions,columns=['x1','y1','x2','y2'])
+        df_ball_positions = df_ball_positions.interpolate()
+        df_ball_positions = df_ball_positions.bfill()
+        ball_pos = [{1:{"bbox":x}}for x in df_ball_positions.to_numpy().tolist()]
+        return ball_pos
+    
     def detect_frames(self, frames):
         batch_size = 16
         results = []
@@ -115,10 +124,16 @@ class Tracker:
         for frame_num, frame in enumerate(frames):
             frame = frame.copy()
             for track_id, player in tracks['players'][frame_num].items():
-                frame = self.draw_ellipse(frame, player['bbox'], (0, 255, 0), track_id)
+                color = player.get("team_color", (0, 255, 0))
+                frame = self.draw_ellipse(frame, player['bbox'], color, track_id)
+                if player.get('has_ball',False):
+                    frame = self.draw_triangle(frame,player['bbox'],(0,0,255))
+
             for _, referee in tracks['referee'][frame_num].items():
                 frame = self.draw_ellipse(frame, referee['bbox'], (0, 0, 255))
+
             for _, ball in tracks['ball'][frame_num].items():
                 frame = self.draw_triangle(frame, ball['bbox'], (0, 255, 0))
+                
             annotated_frames.append(frame)
         return annotated_frames
