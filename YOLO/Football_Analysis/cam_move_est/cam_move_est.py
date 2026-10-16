@@ -26,12 +26,21 @@ class CamMoveEst():
             mask = mask_features,
         )
 
+    def add_adjust_positions_to_tracks(self,tracks, camera_movement_per_frame):
+        for object, object_tracks in tracks.items():
+            for frame_num, track in enumerate(object_tracks):
+                for track_id, track_info in track.items():
+                    position = track_info['position']
+                    camera_movement = camera_movement_per_frame[frame_num]
+                    position_adjusted = (position[0]-camera_movement[0],position[1]-camera_movement[1])
+                    tracks[object][frame_num][track_id]['position_adjusted'] = position_adjusted
+
     def get_camera_movement(self, frames, read_stubs = False, path = None):
         if read_stubs and path is not None and os.path.exists(path):
             with open(path, 'rb') as f:
                 return pickle.load(f)
             
-        camera_movement = [[0,0]*len(frames)]
+        camera_movement = [[0,0]]*len(frames)
         prev_gray = cv2.cvtColor(frames[0],cv2.COLOR_BGR2GRAY)
         old_features = cv2.goodFeaturesToTrack(prev_gray,**self.features)
 
@@ -41,9 +50,9 @@ class CamMoveEst():
                                                           frame_gray,old_features,None,**self.lk_params)
             max_dist = 0
             camera_movement_x, camera_movement_y = 0,0
-            for i ,(new, old) in enumerate(new_features, old_features):
-                new_features_point = new.reval()
-                old_features_point = new.reval()
+            for i ,(new, old) in enumerate(zip(new_features, old_features)):
+                new_features_point = new.ravel()
+                old_features_point = old.ravel()
                 dist = measure_distance(new_features_point, old_features_point)
                 if dist > max_dist:
                     max_dist = dist

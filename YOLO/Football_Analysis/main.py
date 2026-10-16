@@ -3,13 +3,27 @@ from tracker import Tracker
 from team_assigner import TeamAssigner
 from ball_assigner import BallAssigner
 from cam_move_est import CamMoveEst
+from speed_dist_est import SpeedAndDistance_Estimator
+from view_transformer import ViewTransformer
 def main():
     video_frames = read_video("Input_Videos/08fd33_4.mp4")
     tracker = Tracker("Training/football_players-2/weights/best.pt")
     tracks = tracker.get_opject_tracks(video_frames, read_from_stub=True, stub_path="stubs/tracks.pkl")
-
     tracks["ball"] = tracker.interpolate_ball(tracks["ball"])
-    
+    tracker.add_position_to_tracks(tracks)
+
+    cam_move_estimator = CamMoveEst(video_frames[0])
+    camera_movement = cam_move_estimator.get_camera_movement(video_frames,
+                                                                read_stubs=True,
+                                                                path="stubs/camera_movement.pkl")
+    cam_move_estimator.add_adjust_positions_to_tracks(tracks, camera_movement)
+
+    view_transformer = ViewTransformer()
+    view_transformer.add_transformed_position_to_tracks(tracks)
+
+    speed_distance_estimator = SpeedAndDistance_Estimator()
+    speed_distance_estimator.add_speed_and_distance_to_tracks(tracks)
+
     team_assigner = TeamAssigner()
     team_assigner.assign_team_color(video_frames[0],tracks['players'][0])
     for frame, player_track in enumerate(tracks['players']):
@@ -29,6 +43,7 @@ def main():
             team_controlling.append(team_controlling[-1])
     
     output_frames = tracker.draw_annotations(video_frames, tracks)
+    speed_distance_estimator.draw_speed_and_distance(output_frames,tracks)
     save_video(output_frames, "Output_Videos/output_video.avi")
 
 
