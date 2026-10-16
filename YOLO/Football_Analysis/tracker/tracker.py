@@ -7,7 +7,7 @@ import numpy as np
 import sys
 import pandas as pd
 sys.path.append('../')
-from utils import get_center_of_bbox, get_bbox_width
+from utils import get_center_of_bbox, get_bbox_width, get_foot_position
 class Tracker:
     def __init__(self, model_path):
         self.model = YOLO(model_path)
@@ -119,6 +119,17 @@ class Tracker:
         cv2.drawContours(frame, [np.array([pt1, pt2, pt3])], 0, (0, 0, 0), 2)
         return frame
         
+    def add_position_to_tracks(sekf,tracks):
+        for object, object_tracks in tracks.items():
+            for frame_num, track in enumerate(object_tracks):
+                for track_id, track_info in track.items():
+                    bbox = track_info['bbox']
+                    if object == 'ball':
+                        position= get_center_of_bbox(bbox)
+                    else:
+                        position = get_foot_position(bbox)
+                    tracks[object][frame_num][track_id]['position'] = position
+
     def draw_annotations(self, frames, tracks):
         annotated_frames = []
         for frame_num, frame in enumerate(frames):
